@@ -1,0 +1,25 @@
+# Route the apex domain (+ www) to the Prestige Locations app.
+#
+# Why a FILE route and not Docker labels: the prestige app runs as a SEPARATE
+# compose project on the HOST network (network_mode: host, port 3001) because its
+# Postgres lives on the host's localhost:5432. It is therefore NOT on the `edge`
+# network, so Traefik's docker-label discovery can't reach it. Instead we point a
+# file route at the host gateway. The traefik service maps host.docker.internal to
+# the host gateway (see extra_hosts in ../../docker-compose.yml); the app binds
+# *:3001 on the host, so the gateway reaches it.
+#
+# NOTE: dynamic files are NOT interpolated with ${DOMAIN} — the domain is literal.
+
+http:
+  routers:
+    prestige:
+      rule: "Host(`prestigelocations.ca`) || Host(`www.prestigelocations.ca`)"
+      entryPoints:
+        - web
+      service: prestige
+
+  services:
+    prestige:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3001"

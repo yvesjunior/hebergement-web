@@ -7,8 +7,8 @@
 # the Host header, which container handles the request. Combined with a wildcard
 # DNS record (*.yourdomain -> tunnel), adding a new app requires NO change here.
 
-tunnel: CHANGE_ME_TUNNEL_ID
-credentials-file: /etc/cloudflared/CHANGE_ME_TUNNEL_ID.json
+tunnel: b1774fc4-f03e-48cb-89eb-0732f617667e
+credentials-file: /etc/cloudflared/b1774fc4-f03e-48cb-89eb-0732f617667e.json
 
 # Sensible defaults for all ingress rules.
 originRequest:

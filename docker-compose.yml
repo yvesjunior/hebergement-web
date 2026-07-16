@@ -27,6 +27,10 @@ services:
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
     networks:
       - edge
+    extra_hosts:
+      # Reach the host gateway so file routes can target host-network apps
+      # (the prestige app runs on host:3001). See traefik/dynamic/prestige.yml.
+      - "host.docker.internal:host-gateway"
     # No ports published to the host: the only way in is through the tunnel.
     # (Uncomment to reach the dashboard/apps directly on the LAN for debugging.)
     # ports:
