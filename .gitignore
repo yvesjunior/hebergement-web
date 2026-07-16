@@ -1,7 +1,9 @@
 # Secrets — NEVER commit these
 .env
-cloudflared/*.json          # tunnel credentials
-cloudflared/cert.pem        # origin cert from `cloudflared tunnel login`
+# tunnel credentials
+cloudflared/*.json
+# origin cert from `cloudflared tunnel login`
+cloudflared/cert.pem
 
 # Local overrides
 docker-compose.override.yml
