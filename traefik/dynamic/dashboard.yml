@@ -1,0 +1,26 @@
+# Exposes the Traefik dashboard at traefik.${DOMAIN} through the tunnel.
+# Best protection: put it behind Cloudflare Access (Zero Trust) — see README
+# "Securing internal apps". The BasicAuth middleware here is a second line of
+# defence for when you haven't set up Access yet.
+#
+# Generate a password hash:
+#   htpasswd -nbB admin 'your-strong-password'
+# Paste the full "user:hash" output into the users list below. In a plain YAML
+# file like this, a single "$" is fine (only docker-compose needs "$$").
+
+http:
+  routers:
+    traefik-dashboard:
+      rule: "Host(`traefik.CHANGE_ME_DOMAIN`)"
+      entryPoints:
+        - web
+      service: api@internal
+      middlewares:
+        - dashboard-auth
+
+  middlewares:
+    dashboard-auth:
+      basicAuth:
+        users:
+          # PLACEHOLDER — replace with the output of `htpasswd -nbB admin '...'`
+          - "admin:REPLACE_WITH_HTPASSWD_HASH"

@@ -1,0 +1,29 @@
+# Template for one of your real apps. Copy this folder, rename, and adjust:
+#   - the service/router/service names (must be unique per app)
+#   - the Host() subdomain
+#   - the loadbalancer server.port (the port YOUR app listens on inside the container)
+#
+# Then add its path to the `include:` list in the root docker-compose.yml and:
+#   docker compose up -d <service-name>      # run from the repo root
+
+services:
+  app:
+    # build: .                      # ...or point at your own image:
+    image: your-registry/your-app:latest
+    container_name: example-node
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - edge
+    labels:
+      - traefik.enable=true
+      # Public hostname for this app:
+      - "traefik.http.routers.example-node.rule=Host(`app.${DOMAIN}`)"
+      - traefik.http.routers.example-node.entrypoints=web
+      # The port the app listens on INSIDE the container (not a host port):
+      - traefik.http.services.example-node.loadbalancer.server.port=3000
+
+networks:
+  edge:
+    external: true

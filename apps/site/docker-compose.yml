@@ -1,0 +1,30 @@
+# App qui sert la RACINE du domaine : https://prestigelocations.ca
+#
+# À COMPLÉTER : remplace l'image et le port par ceux de ton vrai site, puis
+# décommente la ligne correspondante dans `include:` du docker-compose.yml racine.
+#
+# Rappel : le wildcard DNS *.domaine ne couvre PAS l'apex. La bascule de l'apex
+# vers le tunnel se fait en Phase 4 (voir docs/cloudflare-godaddy-setup.md).
+#
+# Déploiement (depuis la racine du repo) :  docker compose up -d site
+
+services:
+  site:
+    image: CHANGE_ME/your-site:latest   # <-- ton image (ou `build: ./chemin`)
+    container_name: site
+    restart: unless-stopped
+    networks:
+      - edge
+    labels:
+      - traefik.enable=true
+      # Racine du domaine :
+      - "traefik.http.routers.site.rule=Host(`${DOMAIN}`)"
+      - traefik.http.routers.site.entrypoints=web
+      # + www redirigé vers l'apex (optionnel) :
+      # - "traefik.http.routers.site.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
+      # Port sur lequel TON site écoute DANS le conteneur :
+      - traefik.http.services.site.loadbalancer.server.port=8080
+
+networks:
+  edge:
+    external: true

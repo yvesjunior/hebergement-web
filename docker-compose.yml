@@ -1,0 +1,49 @@
+# Infrastructure stack: Cloudflare Tunnel + Traefik reverse proxy.
+# This is the only piece that talks to the internet. Individual apps live in
+# ./apps/* and join the shared external "edge" network — see README.md.
+#
+# Apps are pulled in via `include` below so the whole thing is ONE compose
+# project with ONE root .env. Add an app = create apps/<name>/docker-compose.yml
+# and add one line here. Bring everything up: `docker compose up -d`.
+# Target a single app: `docker compose up -d <service-name>`.
+
+include:
+  - apps/whoami/docker-compose.yml
+  - apps/example-node/docker-compose.yml
+  # - apps/site/docker-compose.yml       # apex (prestigelocations.ca) — décommente une fois l'image/port réglés
+
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --configfile=/etc/traefik/traefik.yml
+    volumes:
+      # Read-only docker socket so Traefik can auto-discover labelled services.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - edge
+    # No ports published to the host: the only way in is through the tunnel.
+    # (Uncomment to reach the dashboard/apps directly on the LAN for debugging.)
+    # ports:
+    #   - "127.0.0.1:8080:80"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      # config.yml + the tunnel credentials JSON live here (credentials gitignored).
+      - ./cloudflared:/etc/cloudflared:ro
+    networks:
+      - edge
+    depends_on:
+      - traefik
+
+networks:
+  edge:
+    external: true

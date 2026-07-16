@@ -1,0 +1,27 @@
+# Cloudflare Tunnel configuration (git-managed).
+#
+# Fill in your tunnel ID below (from `cloudflared tunnel create`). The matching
+# credentials file <TUNNEL_ID>.json must sit next to this file — it is gitignored.
+#
+# Routing strategy: send EVERYTHING to Traefik and let Traefik decide, based on
+# the Host header, which container handles the request. Combined with a wildcard
+# DNS record (*.yourdomain -> tunnel), adding a new app requires NO change here.
+
+tunnel: CHANGE_ME_TUNNEL_ID
+credentials-file: /etc/cloudflared/CHANGE_ME_TUNNEL_ID.json
+
+# Sensible defaults for all ingress rules.
+originRequest:
+  connectTimeout: 30s
+  noHappyEyeballs: true
+
+ingress:
+  # Catch-all: hand every hostname to Traefik on the shared docker network.
+  - service: http://traefik:80
+
+  # --- Alternative: explicit per-service rules (if you ever drop Traefik) ---
+  # - hostname: app1.yourdomain.com
+  #   service: http://app1:8080
+  # - hostname: app2.yourdomain.com
+  #   service: http://app2:3000
+  # - service: http_status:404   # required final catch-all in that mode
