@@ -1,0 +1,51 @@
+# Routes for the EMI Confection stack (apps/emiconfection).
+#
+# Like prestige / theheavenlife / fatimahproject, this app runs as a SEPARATE
+# compose project on the HOST network (network_mode: host) because its Postgres
+# lives on the host's 127.0.0.1:5432. It is therefore NOT on the `edge` network,
+# so Traefik's docker-label discovery can't reach it — we point file routes at the
+# host gateway. Traefik maps host.docker.internal -> host gateway (see extra_hosts
+# in ../../docker-compose.yml); each service binds its port on the host:
+#   emishops.net (+ www) -> :3006 (legacy shop, Apache)
+#   admin.emishops.net   -> :3004 (POS Admin, Next.js)
+#   api.emishops.net     -> :3005 (POS API, Node)
+#
+# Dynamic files are NOT interpolated — hostnames are literal. Traefik hot-reloads
+# this file; no restart needed. Returns 502 until the containers are up and until
+# Cloudflare DNS for emishops.net points at the tunnel.
+
+http:
+  routers:
+    emishops_web:
+      rule: "Host(`emishops.net`) || Host(`www.emishops.net`)"
+      entryPoints:
+        - web
+      service: emishops_web
+
+    emishops_admin:
+      rule: "Host(`admin.emishops.net`)"
+      entryPoints:
+        - web
+      service: emishops_admin
+
+    emishops_api:
+      rule: "Host(`api.emishops.net`)"
+      entryPoints:
+        - web
+      service: emishops_api
+
+  services:
+    emishops_web:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3006"
+
+    emishops_admin:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3004"
+
+    emishops_api:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3005"
