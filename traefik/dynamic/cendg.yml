@@ -1,0 +1,29 @@
+# Route the apex domain (+ www) to the Christ Embassy NDG website.
+#
+# Why a FILE route and not Docker labels: like prestige / theheavenlife /
+# fatimahproject / emishops, this app runs as a SEPARATE compose project on the
+# HOST network (network_mode: host, Apache rebound to :3007) because its Postgres
+# lives on the host's 127.0.0.1:5432. It is therefore NOT on the `edge` network,
+# so Traefik's docker-label discovery can't reach it — we point a file route at
+# the host gateway. Traefik maps host.docker.internal -> host gateway (see
+# extra_hosts in ../../docker-compose.yml); the app binds *:3007 on the host.
+#
+# NOTE: returns 502 until Cloudflare DNS for christembassymontreal-ndg.org points
+# the apex + www at the tunnel (CNAME -> <TUNNEL_ID>.cfargotunnel.com, Proxied,
+# SSL/TLS = Full). Traefik hot-reloads this file — no restart needed.
+#
+# NOTE: dynamic files are NOT interpolated — the domain is literal.
+
+http:
+  routers:
+    cendg:
+      rule: "Host(`christembassymontreal-ndg.org`) || Host(`www.christembassymontreal-ndg.org`)"
+      entryPoints:
+        - web
+      service: cendg
+
+  services:
+    cendg:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3007"
